@@ -1,0 +1,197 @@
+
+--- Keboola Connectors API ---
+
+---
+Common requirements and recommendations for Keboola APIs.
+
+# HTTP Headers
+
+All requests should accept these headers:
+
+* *X-StorageApi-Token*  - storage
+* *X-KBC-RunId* - Identificator of one bussiness job. This value should be passed to all logs and events as `runId`. If not set component should generate one itself using Storage API Tickets service. Read more in [http://documentation.keboola.com/ingtegrating-kbc#Logging]
+
+
+## HTTP Response Codes
+
+HTTP status code described below should be returned by service:
+
+### Success responses
+
+<table>
+    <tr>
+        <td>200 <code>OK</code></td>
+        <td>The request was successful.</td>
+    </tr>
+    <tr>
+        <td>201 <code>Created</code></td>
+        <td>The request was successful and a new resource was created.</td>
+    </tr>
+    <tr>
+        <td>202 <code>Accepted</code></td>
+        <td>Asynchronous request - The request has been accepted for processing, but the processing has not been completed. Response must contain URL of resource to poll for result.</td>
+    </tr>
+    <tr>
+        <td>204 <code>No Content</code></td>
+        <td>The request was successful but there is nothing to return. Usually response of DELETE requests.</td>
+    </tr>
+</table>
+
+### Error responses
+<table>
+    <tr>
+        <td>400 <code>Bad Request</code></td>
+        <td>The request was invalid. Usually caused by invalid input data (missing arguments, invalid arguments values, etc.).  Cause of error is described in response.</td>
+    </tr>
+    <tr>
+        <td>401 <code>Unauthorized</code></td>
+        <td>Authentication failed.</td>
+    </tr>
+    <tr>
+        <td>403 <code>Forbidden</code></td>
+        <td>You don't have access to resource.</td>
+    </tr>
+    <tr>
+        <td>404 <code>Not Found</code></td>
+        <td>You're asking for something that doesn't exist.</td>
+    </tr>
+    <tr>
+        <td>500 <code>Internal Server Error</code></td>
+        <td>Something went wrong. We are sorry, it is our fault and we will make our best to fix it!</td>
+    </tr>
+    <tr>
+        <td>503 <code>Temporary Unavailable</code></td>
+        <td>This response is typically returned when system is under maintenance.
+            Maintenance reason and expected maintenance ent time are also returned in response.
+        </td>
+    </tr>
+</table>
+
+
+## HTTP Verbs
+
+* `GET` Used for retrieving resources
+* `POST` Used for creating resources
+* `PUT` Used for updating existing resources
+* `DELETE` Used for deleting resources
+
+
+## Parameters
+Many API methods take optional parameters. For GET requests, 
+any parameters not specified as a segment in the path can be passed as an HTTP query string parameter.
+
+For `POST`, `PUT`, and `DELETE` requests, parameters not included in the URL should be encoded as JSON.
+
+    curl -i -H 'X-StorageApi-Token: your_token' -d '{"name":"my table"}'
+## Responses
+
+* API should be **JSON** only
+* Resource URI must be returned in `uri` property
+* Any possible metadata related to request or resource should be returned in custom HTTP headers 
+
+### Single resource example
+
+    {
+        "uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.languages",
+        "id": "in.c-main.languages",
+        "name": "languages",
+        "gdName": "languages",
+        "created": "2012-07-23 09:51:45",
+        "transactional": false,
+        "lastImportDate": null,
+        "columns": [
+            "id",
+            "name_id",
+            "nm_id"
+        ],
+        "indexedColumns": [
+            "id"
+        ],
+        "bucket": {
+            "uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+            "id": "in.c-main",
+            "name": "c-main",
+            "stage": "in",
+            "description": "Main user storage",
+            "tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+        }
+    }
+
+### Resources list example
+
+    [
+        {
+    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
+    		"id": "in.c-main.tweets",
+    		"name": "tweets",
+    		"gdName": "",
+    		"created": "2012-07-13 09:58:47",
+    		"lastImportDate": "2012-07-13 10:00:42",
+    		"bucket": {
+    			"uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+    			"id": "in.c-main",
+    			"name": "c-main",
+    			"stage": "in",
+    			"description": "Main user storage",
+    			"tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+    		}
+    	},
+    	{
+    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets_2",
+    		"id": "in.c-main.tweets_2",
+    		"name": "tweets_2",
+    		"gdName": "",
+    		"created": "2012-07-13 15:04:27",
+    		"lastImportDate": null,
+    		"bucket": {
+    			"uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+    			"id": "in.c-main",
+    			"name": "c-main",
+    			"stage": "in",
+    			"description": "Main user storage",
+    			"tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+    		}
+    	}
+    ]
+
+## Cross Origin Resource Sharing
+[CORS](https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS) should be enabled to be able to build web UIs directly on APIs.
+
+---
+
+--
+Sample connector's API calls required for orchestration 
+--
+
+### Get date of last run and optionally order to force run
+
+This call is optional. If not implemented, orchestrator will run configured job on this connector without this check.
+
+GET /check
+> X-StorageApi-Token: 123456
+< 200
+< Content-Type: application/json
+{ 
+    "lastRunDate": "2012-09-14T10:27:04+01:00", 
+    "forceRun": false
+}
+
+
+### Run connector's job for selected user or his account
+
+#### Parameters
+
+* **account** (optional) - imports either chosen account or all accounts for current user
+
+POST /run
+> X-StorageApi-Token: 123456
+> Content-Type: application/json
+{ 
+    "account": 1
+}
+< 200
+< Content-Type: application/json
+{ 
+    "duration": 123.11
+}
+
