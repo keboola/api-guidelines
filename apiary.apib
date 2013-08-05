@@ -121,7 +121,7 @@ For `POST`, `PUT`, and `DELETE` requests, parameters not included in the URL sho
 
     [
         {
-    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
+        	"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
     		"id": "in.c-main.tweets",
     		"name": "tweets",
     		"gdName": "",
@@ -157,8 +157,41 @@ For `POST`, `PUT`, and `DELETE` requests, parameters not included in the URL sho
 ## Cross Origin Resource Sharing
 [CORS](https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS) should be enabled to be able to build web UIs directly on APIs.
 
+Recommended settings:
+
+* `Access-Control-Allow-Origin:` *
+* `Access-Control-Allow-Methods:` GET, POST, PUT, DELETE, OPTIONS
+* `Access-Control-Allow-Headers:` content-type, x-requested-with, x-storageapi-token, x-provisioning-token, x-storageapi-url, x-requested-by, x-user-agent, x-kbc-runid
+
+## Pagination
+`limit` and `offset` parameters should be supported in requests returning multiple items.
+
 ## Asynchronous Requests
-TODO
+All potentially long-running tasks should be executed asynchronously.
+All asynchronous requests should return HTTP `202` response code and job resource immediately.
+Execution of job can than be monitored using job resource API call.
+
+### Job resource
+Client should be able to poll job to check it's status. Job URL must be returned in asynchronous request response.
+
+**Required job attributes**
+
+ * `id` - job id
+ * `url` - job url
+ * `status` - job status, must be one of:
+   * `waiting` - waiting for execution
+   * `processing` - job execution is in progress
+   * `error` - job is done but execution ended with error
+   * `succcess` - job is done and execution was successful
+   
+Jobs can be then monitored by client:
+
+  1. **Start the job** - Job resource is created and url for polling is returned
+  2. **Poll job status** - Poll job url until job status is set to `success` or `error`
+  3. **Timeout** - Throw an error if job didn`t finished in expected time
+  4. **Check the results**
+
+This workflow will be implemented in Orchestrator, when `202` code is returned from task and wait for asynchronous task is enabled.
 
 ---
 
