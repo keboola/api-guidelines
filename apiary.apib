@@ -121,7 +121,7 @@ For `POST`, `PUT`, and `DELETE` requests, parameters not included in the URL sho
 
     [
         {
-        	"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
+    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
     		"id": "in.c-main.tweets",
     		"name": "tweets",
     		"gdName": "",
@@ -165,6 +165,11 @@ Recommended settings:
 
 ## Pagination
 `limit` and `offset` parameters should be supported in requests returning multiple items.
+
+## Partial Responses
+By default all or most resource properties are returned. Sometimes not all these properties or nested objects are required and tends to large responses. 
+Returned fields should be picked by `include` parameter - comma delimited list of fields.
+
 
 ## Asynchronous Requests
 All potentially long-running tasks should be executed asynchronously.
