@@ -217,6 +217,51 @@ GET /check
     "forceRun": false
 }
 
+### Get configuration parameters
+
+This call is optional, used by UIs. Returns information how to store extractor's configuration.
+
+GET /config
+< 200
+< Content-Type: application/json
+{ 
+	"id": "ex-sfdc",
+	"table": {
+	    "columns": ["id", "load", "query"],
+    	"primaryKey": "id"
+    },
+    "bucketId": "sys.c-ex-SFDC",
+    "ignoreTables": ["accounts"],
+    "friendlyName": "Salesforce Extractor"
+}
+
+**Response attributes**
+<table>
+    <tr>
+        <td><code>id</code></td>
+        <td>Component id (used in stack info).</td>
+    </tr>
+    <tr>
+        <td><code>table.columns</code></td>
+        <td>List of columns for creating an empty configuration table</td>
+    </tr>
+    <tr>
+        <td><code>table.primaryKey</code> (optional)</td>
+        <td>Primary key in configuration table (if any).</td>
+    </tr>
+    <tr>
+        <td><code>bucketId</code> (optional)</td>
+        <td>Bucket id where all configurations are stored.</td>
+    </tr>
+    <tr>
+        <td><code>ignoreTables</code> (optional)</td>
+        <td>List of tables, that are ignored (as accounts) in the configuration bucket.</td>
+    </tr>
+    <tr>
+        <td><code>friendlyName</code> (optional)</td>
+        <td>Human readable component description</td>
+    </tr>
+</table>
 
 ### Run connector's job for selected user or his account
 
