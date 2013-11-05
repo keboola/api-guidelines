@@ -1,237 +1,307 @@
-HOST: https://orchestrator-2.keboola.com
 
---- Keboola Orchestrator v2 API ---
+--- Keboola Connectors API ---
 
 ---
-
-Orchestrator is responsible for jobs scheduling, execution and monitoring.
-
-Main concepts of Orchestrator are `Orchestrations` and `Jobs`.
-
-`Orchestration` tells you **what** should be executed and **when** it should be executed,
- what is specified with simple list of tasks represented by URLS (external API calls) and when is specified with crontab record syntax.
-
-`Job` represents a single execution of one orchestration - it is create either by scheduler or manually by Orchestrator API. 
-Logs and status informations are attached to Jobs, jobs are never deleted and can be accessed by API.
-Job is is composed of multiple tasks, each task is one call to some external API which compiles with http://docs.keboolaconnector.apiary.io/, tasks are executed one by one. Whe one task fails whole orchestration
-end up with error and possible next tasks aren't executed. Registered Storage API token is propagated to all defined tasks.
-
-
-Orchestrator is composed by:
-
- - **Scheduler** - creates and enqueues jobs for processing from registered orchestrations based on their timing information
- - **Runner** - executes jobs from queue
-
+Common requirements and recommendations for Keboola APIs.
 
 # HTTP Headers
 
 All requests should accept these headers:
 
-* *X-StorageApi-Token*  - storage api token used for authentification
+* *X-StorageApi-Token*  - storage
+* *X-KBC-RunId* - Identificator of one bussiness job. This value should be passed to all logs and events as `runId`. If not set component should generate one itself using Storage API Tickets service. Read more in [http://documentation.keboola.com/ingtegrating-kbc#Logging]
 
+
+## HTTP Response Codes
+
+HTTP status code described below should be returned by service:
+
+### Success responses
+
+<table>
+    <tr>
+        <td>200 <code>OK</code></td>
+        <td>The request was successful.</td>
+    </tr>
+    <tr>
+        <td>201 <code>Created</code></td>
+        <td>The request was successful and a new resource was created.</td>
+    </tr>
+    <tr>
+        <td>202 <code>Accepted</code></td>
+        <td>Asynchronous request - The request has been accepted for processing, but the processing has not been completed. Response must contain URL of resource to poll for result.</td>
+    </tr>
+    <tr>
+        <td>204 <code>No Content</code></td>
+        <td>The request was successful but there is nothing to return. Usually response of DELETE requests.</td>
+    </tr>
+</table>
+
+### Error responses
+<table>
+    <tr>
+        <td>400 <code>Bad Request</code></td>
+        <td>The request was invalid. Usually caused by invalid input data (missing arguments, invalid arguments values, etc.).  Cause of error is described in response.</td>
+    </tr>
+    <tr>
+        <td>401 <code>Unauthorized</code></td>
+        <td>Authentication failed.</td>
+    </tr>
+    <tr>
+        <td>403 <code>Forbidden</code></td>
+        <td>You don't have access to resource.</td>
+    </tr>
+    <tr>
+        <td>404 <code>Not Found</code></td>
+        <td>You're asking for something that doesn't exist.</td>
+    </tr>
+    <tr>
+        <td>500 <code>Internal Server Error</code></td>
+        <td>Something went wrong. We are sorry, it is our fault and we will make our best to fix it!</td>
+    </tr>
+    <tr>
+        <td>503 <code>Temporary Unavailable</code></td>
+        <td>This response is typically returned when system is under maintenance.
+            Maintenance reason and expected maintenance ent time are also returned in response.
+        </td>
+    </tr>
+</table>
+
+
+## HTTP Verbs
+
+* `GET` Used for retrieving resources
+* `POST` Used for creating resources
+* `PUT` Used for updating existing resources
+* `DELETE` Used for deleting resources
+
+
+## Parameters
+Many API methods take optional parameters. For GET requests, 
+any parameters not specified as a segment in the path can be passed as an HTTP query string parameter.
+
+For `POST`, `PUT`, and `DELETE` requests, parameters not included in the URL should be encoded as JSON.
+
+    curl -i -H 'X-StorageApi-Token: your_token' -d '{"name":"my table"}'
+## Responses
+
+* API should be **JSON** only
+* Resource URI must be returned in `uri` property
+* Any possible metadata related to request or resource should be returned in custom HTTP headers 
+
+### Single resource example
+
+    {
+        "uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.languages",
+        "id": "in.c-main.languages",
+        "name": "languages",
+        "gdName": "languages",
+        "created": "2012-07-23 09:51:45",
+        "transactional": false,
+        "lastImportDate": null,
+        "columns": [
+            "id",
+            "name_id",
+            "nm_id"
+        ],
+        "indexedColumns": [
+            "id"
+        ],
+        "bucket": {
+            "uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+            "id": "in.c-main",
+            "name": "c-main",
+            "stage": "in",
+            "description": "Main user storage",
+            "tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+        }
+    }
+
+### Resources list example
+
+    [
+        {
+    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets",
+    		"id": "in.c-main.tweets",
+    		"name": "tweets",
+    		"gdName": "",
+    		"created": "2012-07-13 09:58:47",
+    		"lastImportDate": "2012-07-13 10:00:42",
+    		"bucket": {
+    			"uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+    			"id": "in.c-main",
+    			"name": "c-main",
+    			"stage": "in",
+    			"description": "Main user storage",
+    			"tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+    		}
+    	},
+    	{
+    		"uri": "https://connection.keboola.com/v2/storage/tables/in.c-main.tweets_2",
+    		"id": "in.c-main.tweets_2",
+    		"name": "tweets_2",
+    		"gdName": "",
+    		"created": "2012-07-13 15:04:27",
+    		"lastImportDate": null,
+    		"bucket": {
+    			"uri": "https://connection.keboola.com/v2/storage/buckets/in.c-main",
+    			"id": "in.c-main",
+    			"name": "c-main",
+    			"stage": "in",
+    			"description": "Main user storage",
+    			"tables": "https://connection.keboola.com/v2/storage/buckets/in.c-main/tables"
+    		}
+    	}
+    ]
+
+## Cross Origin Resource Sharing
+[CORS](https://developer.mozilla.org/en-US/docs/HTTP/Access_control_CORS) should be enabled to be able to build web UIs directly on APIs.
+
+Recommended settings:
+
+* `Access-Control-Allow-Origin:` *
+* `Access-Control-Allow-Methods:` GET, POST, PUT, DELETE, OPTIONS
+* `Access-Control-Allow-Headers:` content-type, x-requested-with, x-storageapi-token, x-provisioning-token, x-storageapi-url, x-requested-by, x-user-agent, x-kbc-runid
+
+## Pagination
+`limit` and `offset` parameters should be supported in requests returning multiple items.
+
+## Partial Responses
+By default all or most resource properties are returned. Sometimes not all these properties or nested objects are required and tends to large responses. 
+Returned fields should be picked by `include` parameter - comma delimited list of fields.
+
+
+## Asynchronous Requests
+All potentially long-running tasks should be executed asynchronously.
+All asynchronous requests should return HTTP `202` response code and job resource immediately.
+Execution of job can than be monitored using job resource API call.
+
+### Job resource
+Client should be able to poll job to check it's status. Job URL must be returned in asynchronous request response.
+
+**Required job attributes**
+
+ * `id` - job id
+ * `url` - job url
+ * `status` - job status, must be one of:
+   * `waiting` - waiting for execution
+   * `processing` - job execution is in progress
+   * `error` - job is done but execution ended with error
+   * `succcess` - job is done and execution was successful
+   
+Jobs can be then monitored by client:
+
+  1. **Start the job** - Job resource is created and url for polling is returned
+  2. **Poll job status** - Poll job url until job status is set to `success` or `error`
+  3. **Timeout** - Throw an error if job didn`t finished in expected time
+  4. **Check the results**
+
+This workflow will be implemented in Orchestrator, when `202` code is returned from task and wait for asynchronous task is enabled.
 
 ---
 
+--
+Sample connector's API calls required for orchestration 
+--
+
+### Get date of last run and optionally order to force run
+
+This call is optional. If not implemented, orchestrator will run configured job on this connector without this check.
+
+GET /check
+> X-StorageApi-Token: 123456
+< 200
+< Content-Type: application/json
+{ 
+    "lastRunDate": "2012-09-14T10:27:04+01:00", 
+    "forceRun": false
+}
+
+### Run connector's job for selected user or his account
+
+#### Parameters
+
+* **account** (optional) - imports either chosen account or all accounts for current user
+
+POST /run
+> X-StorageApi-Token: 123456
+> Content-Type: application/json
+{ 
+    "account": 1
+}
+< 200
+< Content-Type: application/json
+{ 
+    "duration": 123.11
+}
 
 --
-Orchestrations
+Sample extractor's API calls required for UI
 --
 
-Orchestrator registration
 
-Orchestration will be registered and used token will saved together with configuration!
-Create individual token for each orchestration is recommended.
+### List accounts
 
-### configuration
-Orchestration configuration must be prepared before its registration.
-Configuration is stored in Storage API table and consists of list of tasks which will be executed one by one.
-
-#### Required configuration table columns
-
-    "id","runUrl","runParameters"
-
-* **id** - row identificator (table's primary key) - allows partial modifications of rows - you can choose whatever you want, 
-* **runUrl** - direct url to run the component. Component should compile with http://docs.keboolaconnector.apiary.io/. Request is called with orchestration Storage API token in `X-StorageApi-Token` header.
-* **runParameters**  - optional parameters for runUrl in JSON format
-
-#### Configuratiom table attributes
-
-* **notificationsEmail** - (optional) When orchestration job execution fail, notification will be sent to specified email. One or more **comma separated** addresses can be set.
+Lists all accounts of the current extractor for the given token.
 
 
-
-### Parameters
-
-* **name** - (optional) Orchestrator name (configurationId will be used if not set)
-* **configurationId** - configuration table id
-* **crontabRecord** - execution schedule in [crontab format](http://en.wikipedia.org/wiki/Cron#Predefined_scheduling_definitions). Note that times should be in UTC.
-POST /orchestrations
-> Content-Type: application/json
-{
-    "name": "Main orchestrator",
-    "configurationId": "sys.c-orchestrators.main-orchestrator",
-    "crontabRecord": "0 * * * *"
-}
-< 201
+GET /accounts
+> X-StorageApi-Token: 123456
+< 200
 < Content-Type: application/json
-{
-    "id": 2362,
-    "name": "Main orchestrator",
-    "configurationId": "sys.c-orchestrators.main-orchestrator",
-    "crontabRecord": "0 * * * *",
-    "createdTime": "2013-03-02T11:11:24+01:00",
-    "lastScheduledTime": null,
-    "active": true,
-    "token": {
-        "id":1661,
-    	"description": "Orchestrator token"
-    }
-}
-
-
-Update orchestration
-PUT /orchestrations/2362
-> Content-Type: application/json
-{
-   "active": false
-}
-< 201
-< Content-Type: application/json
-{
-    "id": 2362,
-    "name": "Main orchestrator",
-    "configurationId": "sys.c-orchestrators.main-orchestrator",
-    "crontabRecord": "0 * * * *",
-    "createdTime": "2013-03-02T11:11:24+01:00",
-    "lastScheduledTime": null,
-    "active": false,
-    "token": {
-		"id":1661,
-		"description": "Orchestrator token"
+[
+	{
+		"id": "main", 
+    	"friendlyName": "Main",
+    	"description": "Main Company Account"
 	}
+]
+
+**Response attributes**
+<table>
+    <tr>
+        <td><code>id</code></td>
+        <td>Configuration Id (used in the **account** attribute in **/run** request), generated by the extractor when creating the table.</td>
+    </tr>
+    <tr>
+        <td><code>friendlyName</code></td>
+        <td>Name of the account</td>
+    </tr>
+    <tr>
+        <td><code>description</code></td>
+        <td>Description of the account</td>
+    </tr>
+</table>
+
+
+### Create an empty configuration table
+
+Create an empty configuration table for the given token
+
+POST /accounts
+> X-StorageApi-Token: 123456
+> Content-Type: application/json
+{ 
+    "name": "Main"
+    "description": "Main Company Account"
 }
-
-
-Get registered orchestrations
-GET /orchestrations
 < 200
 < Content-Type: application/json
-[
-    {
-        "id": 2362,
-        "name": "Main orchestrator",
-        "configurationId": "sys.c-orchestrators.main-orchestrator",
-        "crontabRecord": "0 * * * *",
-        "createdTime": "2013-03-02T11:11:24+01:00",
-        "lastScheduledTime": null,
-        "active": true,
-        "token": {
-			"id":1661,
-			"description": "Orchestrator token"
-		}
-    }
-]
-
-Delete orchestration
-DELETE /orchestrations/{orchestrationId}
-< 204
-
---
-Jobs 
-Each orchestration execution is represented by job.
-
-### Job lifetime
-
-* Job is created (By scheduler or manually threw the API). It's status is `waiting`, job is waiting in processing queue.
-* Job is fetched from queue by worker. It's status is changed to `processing`.
-* Job execution is done, job is deleted from queue. It's status is changed to `error` or `success` depending on job tasks results.
-
-### Job structure
-
-* *id* - job id
-* *orchestrationId* - id of parent orchestration
-* *tokenId* - id of used token
-* *status* - job status, one of `scheduled`, `waiting`, `processing`, `error`, `success`
-* *runId* - run identificator for logging associated to job
-* *createdTime* - creation time of job
-* *startTime* - time of job execution start
-* *finishedTime* - time of job execution end
-* *initializedBy* - how the job was created, it could be crated `manually` or by `scheduler`
-* *results* - informations about job execution
---
-
-
-List orchestration jobs
-GET /orchestrations/{orchestrationId}/jobs
-< 200
-[
-    {
-        "id": 2364,
-        "orchestrationId": 2362,
-        "createdTime": "2013-03-02T11:20:38+01:00",
-        "startTime": null,
-        "endTime": null,
-        "token": {
-           	"id":1661,
-           	"description": "Orchestrator token"
-        },
-        "status": "waiting",
-        "initializedBy": "manually",
-        "results": null
-}
-]
-
-
-Get orchestration job
-GET /jobs/{jobId}
-< 200
-< Content-type: application/json
 {
-    "id": 2364,
-    "orchestrationId": 2362,
-    "createdTime": "2013-03-02T11:20:38+01:00",
-    "startTime": null,
-    "endTime": null,
-    "token": {
-		"id":1661,
-		"description": "Orchestrator token"
-	},
-    "status": "waiting",
-    "initializedBy": "manually",
-    "results": null
+	"id": "main", 
+    "friendlyName": "Main",
+    "description": "Main Company Account"
 }
 
-Manualy execute orchestration
-
-Creates new job for orchstration, job processing should be started immediatelly.
-You can then monitor job status by polling job resource.
-
-
-POST /orchestrations/{orchestrationId}/jobs
-< 201
-< Content-type: application/json
-{
-    "id": 2366,
-    "orchestrationId": 2362,
-    "createdTime": "2013-03-02T11:23:21+01:00",
-    "startTime": null,
-    "endTime": null,
-    "token": {
-		"id":1661,
-		"description": "Orchestrator token"
-	},
-    "status": "waiting",
-    "initializedBy": "manually",
-    "results": null
-}
-
-
-Cancel orchestration job
-
-Only waiting job can be canceled.
-
-DELETE /jobs/{jobId}
-< 204
-
-
+**Request attributes**
+<table>
+    <tr>
+        <td><code>name</code></td>
+        <td>Name of the account</td>
+    </tr>
+    <tr>
+        <td><code>description</code> (optional)</td>
+        <td>Description of the account</td>
+    </tr>
+</table>
 
