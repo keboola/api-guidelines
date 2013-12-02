@@ -314,17 +314,8 @@ POST /configs
 
 ### Delete a configuration 
 
-Deletes given configuration with option to delete primary data (eg. data downloaded by an extractor). Purging is optional.
+Deletes given configuration, does not delete primary data (eg downloaded data from extractor).
 
-**Request parameters**
-<table>
-    <tr>
-        <td><code>purge</code> (optional)</td>
-        <td>Allows the component to delete all of its related primary data. Defaults to <code>0</code></td>
-    </tr>
-</table>
-
-
-DELETE /configs/{config_id}?purge=1
+DELETE /configs/{config_id}
 > X-StorageApi-Token: 123456
 < 204
