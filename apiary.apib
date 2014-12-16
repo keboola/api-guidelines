@@ -9,7 +9,7 @@ Common requirements and recommendations for Keboola APIs.
 All requests should accept these headers:
 
 * *X-StorageApi-Token*  - storage
-* *X-KBC-RunId* - Identificator of one bussiness job. This value should be passed to all logs and events as `runId`. If not set component should generate one itself using Storage API Tickets service. Read more in [http://documentation.keboola.com/ingtegrating-kbc#Logging]
+* *X-KBC-RunId* - Identificator of one bussiness job. This value should be passed to all logs and events as `runId`. If not set component should generate one itself using Storage API Tickets service. Read more in [http://documentation.keboola.com/integrating-kbc#Logging]
 
 
 ## HTTP Response Codes
@@ -234,38 +234,6 @@ API calls required for UI Wrapper
 Components can serve multiple configurations, eg. accounts in extractors and writers, transformation buckets in transformations, orchestrations in an ochestrator, etc.
 --
 
-### List configurations
-
-Lists all configurations of the current component. Configration Ids does not need to be related to table names or IDs in Storage API, but must be consistent within the component.
-
-**Response attributes**
-<table>
-    <tr>
-        <td><code>id</code></td>
-        <td>Configuration ID (used in the <code>config</code> attribute in <code>/run</code> request).</td>
-    </tr>
-    <tr>
-        <td><code>name</code></td>
-        <td>Name of the configuration</td>
-    </tr>
-    <tr>
-        <td><code>description</code></td>
-        <td>Description of the configuration</td>
-    </tr>
-</table>
-
-GET /configs
-> X-StorageApi-Token: 123456
-< 200
-< Content-Type: application/json
-[
-	{
-		"id": "main", 
-		"name": "Main",
-		"description": "Main Company Account"
-	}
-]
-
 ### Create a configuration
 
 Creates a new empty configuration. Requester does not need to specify a configuration id, the component must assign a unique id.
@@ -311,7 +279,7 @@ GET /configs/{config_id}
 > X-StorageApi-Token: 123456
 < 200
 < Content-Type: application/json
-< {}
+< {"some":"content"}
 
 ### Update a configuration
 
@@ -320,7 +288,7 @@ Updates a component configuration. The request body is completely optional, and 
 PUT /configs/{config_id}
 > X-StorageApi-Token: 123456
 > Content-Type: application/json
-> {}
+> {"some":"content"}
 < 200
 < Content-Type: application/json
 < {"status": "ok"}
