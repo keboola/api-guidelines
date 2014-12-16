@@ -274,11 +274,7 @@ Creates a new empty configuration. Requester does not need to specify a configur
 <table>
     <tr>
         <td><code>name</code></td>
-        <td>Name of the configuration</td>
-    </tr>
-    <tr>
-        <td><code>description</code> (optional)</td>
-        <td>Description of the configuration</td>
+        <td>Name of the configuration, used to determine the configuration ID</td>
     </tr>
 </table>
 
@@ -292,10 +288,6 @@ Creates a new empty configuration. Requester does not need to specify a configur
         <td><code>name</code></td>
         <td>Name of the configuration</td>
     </tr>
-    <tr>
-        <td><code>description</code></td>
-        <td>Description of the configuration</td>
-    </tr>
 </table>
 
 POST /configs
@@ -303,19 +295,39 @@ POST /configs
 > Content-Type: application/json
 { 
     "name": "Main"
-    "description": "Main Company Account"
 }
-< 200
+< 202
 < Content-Type: application/json
 {
 	"id": "main", 
-	"name": "Main",
-	"description": "Main Company Account"
+	"name": "Main"
 }
+
+### Get a configuration
+
+Retrieves a component configuration. The response body is completely optional and depends on the component's UI.
+
+GET /configs/{config_id}
+> X-StorageApi-Token: 123456
+< 200
+< Content-Type: application/json
+< {}
+
+### Update a configuration
+
+Updates a component configuration. The request body is completely optional, and depends on the component's UI.
+
+PUT /configs/{config_id}
+> X-StorageApi-Token: 123456
+> Content-Type: application/json
+> {}
+< 200
+< Content-Type: application/json
+< {"status": "ok"}
 
 ### Delete a configuration 
 
-Deletes given configuration, does not delete primary data (eg downloaded data from extractor).
+Deletes given configuration, does not delete primary data (eg. downloaded data from extractor).
 
 DELETE /configs/{config_id}
 > X-StorageApi-Token: 123456
