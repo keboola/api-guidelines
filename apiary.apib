@@ -211,15 +211,22 @@ Run connector's job for selected user and configuration
 <table>
     <tr>
         <td><code>config</code> (optional)</td>
-        <td>Select a configuration ID to run (all available configurations if not given)</td>
+        <td>Configuration ID to run</td>
     </tr>
+    <tr>
+        <td><code>configData</code> (optional)</td>
+        <td>Instead of storing a configuration and using its ID you can specify the configuration directly.</td>
+    </tr>    
 </table>
+
+Note: at least one of `config` and `configData` is optional, but if the two are present, the behaviour is up to the developer (some may throw an exception, some may merge and override the stored config with the custom values).
 
 POST /run
 > X-StorageApi-Token: 123456
 > Content-Type: application/json
 { 
-    "config": 1
+    "config": 1,
+    "configData": {}
 }
 < 200
 < Content-Type: application/json
